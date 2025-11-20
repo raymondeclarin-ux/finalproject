@@ -28,10 +28,11 @@ const EventSchema = new mongoose.Schema({
 const Event = mongoose.model("Event", EventSchema);
 
 // ===== ROUTES =====
-app.get("/api/events", async (req, res) => {
+app.get("/events", async (req, res) => {
   const events = await Event.find();
   res.json(events);
 });
 
 // ===== Vercel Export =====
 module.exports = app;
+
