@@ -1,11 +1,32 @@
 {
+  "name": "event-management-api",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node server.js"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "helmet": "^8.1.0",
-    "mongoose": "^8.20.0",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "mongoose": "^7.3.0",
+    "serverless-http": "^3.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
-  }
+    "swagger-ui-express": "^4.6.3"
+  },
+  "description": "",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raymondeclarin-ux/event-management-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raymondeclarin-ux/event-management-api/issues"
+  },
+  "homepage": "https://github.com/raymondeclarin-ux/event-management-api#readme"
 }

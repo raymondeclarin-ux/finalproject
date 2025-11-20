@@ -3,7 +3,7 @@
 // Express + Mongoose + Swagger
 // =====================================
 
-require("dotenv").config();
+require("dotenv").config(); // must be first
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,67 +14,54 @@ const swaggerJsDoc = require("swagger-jsdoc");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// ===== Middleware =====
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
-// =====================================
-// MongoDB Models
-// =====================================
+// ===== MongoDB Models =====
 
 // Event Model
 const EventSchema = new mongoose.Schema({
-  name: String,
-  date: String,
-  venue: String
+  name: { type: String, required: true },
+  date: { type: String, required: true },
+  venue: { type: String, required: true }
 });
 const Event = mongoose.model("Event", EventSchema);
 
 // Attendee Model
 const AttendeeSchema = new mongoose.Schema({
-  name: String,
-  eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event" }
+  name: { type: String, required: true },
+  eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true }
 });
 const Attendee = mongoose.model("Attendee", AttendeeSchema);
 
 // Organizer Model
 const OrganizerSchema = new mongoose.Schema({
-  name: String,
-  contact: String
+  name: { type: String, required: true },
+  contact: { type: String, required: true }
 });
 const Organizer = mongoose.model("Organizer", OrganizerSchema);
 
-// =====================================
-// Swagger Setup
-// =====================================
-
+// ===== Swagger Setup =====
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Event Management API",
       version: "1.0.0",
-      description: "Event, Attendee, Organizer API using MongoDB"
+      description: "Event, Attendee, Organizer API using MongoDB Atlas"
     }
   },
-  apis: ["./server.js"],
+  apis: ["./server.js"]
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// =====================================
-// EVENT ROUTES
-// =====================================
+// ===== EVENT ROUTES =====
 
 // 1. GET all events
-/**
- * @swagger
- * /api/events:
- *   get:
- *     summary: Get all events
- */
 app.get("/api/events", async (req, res) => {
   const events = await Event.find();
   res.json(events);
@@ -93,8 +80,12 @@ app.get("/api/events/:id", async (req, res) => {
 
 // 3. POST create event
 app.post("/api/events", async (req, res) => {
-  const newEvent = await Event.create(req.body);
-  res.status(201).json(newEvent);
+  try {
+    const event = await Event.create(req.body);
+    res.status(201).json(event);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 // 4. PUT update event
@@ -130,9 +121,7 @@ app.delete("/api/events/:id", async (req, res) => {
   }
 });
 
-// =====================================
-// ATTENDEE ROUTES
-// =====================================
+// ===== ATTENDEE ROUTES =====
 
 // 7. GET all attendees
 app.get("/api/attendees", async (req, res) => {
@@ -153,8 +142,12 @@ app.get("/api/attendees/:id", async (req, res) => {
 
 // 9. POST create attendee
 app.post("/api/attendees", async (req, res) => {
-  const attendee = await Attendee.create(req.body);
-  res.status(201).json(attendee);
+  try {
+    const attendee = await Attendee.create(req.body);
+    res.status(201).json(attendee);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 // 10. DELETE attendee
@@ -168,9 +161,7 @@ app.delete("/api/attendees/:id", async (req, res) => {
   }
 });
 
-// =====================================
-// ORGANIZER ROUTES
-// =====================================
+// ===== ORGANIZER ROUTES =====
 
 // 11. GET all organizers
 app.get("/api/organizers", async (req, res) => {
@@ -191,8 +182,12 @@ app.get("/api/organizers/:id", async (req, res) => {
 
 // 13. POST create organizer
 app.post("/api/organizers", async (req, res) => {
-  const organizer = await Organizer.create(req.body);
-  res.status(201).json(organizer);
+  try {
+    const organizer = await Organizer.create(req.body);
+    res.status(201).json(organizer);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 
 // 14. PUT update organizer
@@ -206,9 +201,9 @@ app.put("/api/organizers/:id", async (req, res) => {
   }
 });
 
-// =====================================
-// 15. REPORTS
-// =====================================
+// ===== REPORTS =====
+
+// 15. Event stats
 app.get("/api/reports/event-stats", async (req, res) => {
   const stats = {
     totalEvents: await Event.countDocuments(),
@@ -217,20 +212,18 @@ app.get("/api/reports/event-stats", async (req, res) => {
   res.json(stats);
 });
 
-// =====================================
-// MongoDB Connection + Start Server
-// =====================================
-
-async function start() {
+// ===== MongoDB Connection & Start Server =====
+async function startServer() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
     console.log("✅ Connected to MongoDB Atlas");
-    app.listen(PORT, () =>
-      console.log('Server running at http://localhost:${3000}')
-    );
+    app.listen(PORT, () => console.log('Server running at http://localhost:${PORT}'));
   } catch (err) {
     console.error("❌ MongoDB connection error:", err.message);
   }
 }
 
-start();
+startServer();
