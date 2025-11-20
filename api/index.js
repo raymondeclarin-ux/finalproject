@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -8,15 +9,29 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI);
+// ===== MongoDB Connection =====
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.error("MongoDB Error:", err));
 
-// Example route
+// ===== Event Model =====
+const EventSchema = new mongoose.Schema({
+  name: String,
+  date: String,
+  venue: String
+});
+
+const Event = mongoose.model("Event", EventSchema);
+
+// ===== ROUTES =====
 app.get("/api/events", async (req, res) => {
   const events = await Event.find();
   res.json(events);
 });
 
-// Export handler for Vercel
+// ===== Vercel Export =====
 module.exports = app;
-module.exports = app; // Vercel uses the default export as handler
