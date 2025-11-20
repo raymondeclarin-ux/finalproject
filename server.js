@@ -220,7 +220,7 @@ async function startServer() {
       useUnifiedTopology: true
     });
     console.log("✅ Connected to MongoDB Atlas");
-    app.listen(PORT, () => console.log('Server running at http://localhost:${PORT}'));
+    app.listen(PORT, () => console.log('Server running at http://localhost:${3000}'));
   } catch (err) {
     console.error("❌ MongoDB connection error:", err.message);
   }
