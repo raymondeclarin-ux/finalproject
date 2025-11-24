@@ -3,9 +3,14 @@
 
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// ==================== HOME ROUTE ====================
+app.get("/", (req, res) => {
+  res.send("🎉 Event Management API is running! Use /api/events, /api/attendees, /api/organizers");
+});
 
 // ==================== SAMPLE DATA ====================
 let events = [
@@ -76,7 +81,7 @@ app.get("/api/attendees", (req, res) => {
   res.json(attendees);
 });
 
-// POST new attendee
+// POST add new attendee
 app.post("/api/attendees", (req, res) => {
   const newAttendee = { id: attendees.length + 1, ...req.body };
   attendees.push(newAttendee);
@@ -115,8 +120,6 @@ app.put("/api/organizers/:id", (req, res) => {
 });
 
 // ==================== REPORTS ====================
-
-// Event statistics
 app.get("/api/reports/event-stats", (req, res) => {
   res.json({
     totalEvents: events.length,
