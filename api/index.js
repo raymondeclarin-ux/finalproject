@@ -1,38 +1,21 @@
-require("dotenv").config();
+// api/index.js
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const helmet = require("helmet");
-
 const app = express();
-app.use(cors());
-app.use(helmet());
+const port = process.env.PORT || 3000;
+
 app.use(express.json());
 
-// ===== MongoDB Connection =====
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.error("MongoDB Error:", err));
-
-// ===== Event Model =====
-const EventSchema = new mongoose.Schema({
-  name: String,
-  date: String,
-  venue: String
+// Home Route
+app.get("/", (req, res) => {
+  res.send("🎉 Event Management API is running!");
 });
 
-const Event = mongoose.model("Event", EventSchema);
+// Sample /api/events
+let events = [
+  { id: 1, name: "Tech Conference 2025", date: "2025-12-01", venue: "NEU Auditorium" },
+];
 
-// ===== ROUTES =====
-app.get("/events", async (req, res) => {
-  const events = await Event.find();
-  res.json(events);
-});
+app.get("/api/events", (req, res) => res.json(events));
 
-// ===== Vercel Export =====
+// Export function for Vercel
 module.exports = app;
-
