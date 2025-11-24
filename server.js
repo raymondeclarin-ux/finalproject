@@ -1,229 +1,130 @@
-// =====================================
-// Event Management API (MongoDB Version)
-// Express + Mongoose + Swagger
-// =====================================
+// Event Management API
+// Final Project Phase 1
 
-require("dotenv").config(); // must be first
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const helmet = require("helmet");
-const swaggerUi = require("swagger-ui-express");
-const swaggerJsDoc = require("swagger-jsdoc");
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-// ===== Middleware =====
-app.use(cors());
-app.use(helmet());
 app.use(express.json());
 
-// ===== MongoDB Models =====
+// ==================== SAMPLE DATA ====================
+let events = [
+  { id: 1, name: "Tech Conference 2025", date: "2025-12-01", venue: "NEU Auditorium" },
+  { id: 2, name: "Music Festival", date: "2025-11-10", venue: "City Park" },
+];
 
-// Event Model
-const EventSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  date: { type: String, required: true },
-  venue: { type: String, required: true }
-});
-const Event = mongoose.model("Event", EventSchema);
+let attendees = [
+  { id: 1, name: "Alice", eventId: 1 },
+  { id: 2, name: "Bob", eventId: 2 },
+];
 
-// Attendee Model
-const AttendeeSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true }
-});
-const Attendee = mongoose.model("Attendee", AttendeeSchema);
+let organizers = [
+  { id: 1, name: "John Doe", contact: "john@email.com" },
+];
 
-// Organizer Model
-const OrganizerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  contact: { type: String, required: true }
-});
-const Organizer = mongoose.model("Organizer", OrganizerSchema);
+// ==================== EVENT ROUTES ====================
 
-// ===== Swagger Setup =====
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Event Management API",
-      version: "1.0.0",
-      description: "Event, Attendee, Organizer API using MongoDB Atlas"
-    }
-  },
-  apis: ["./server.js"]
-};
-
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-// ===== EVENT ROUTES =====
-
-// 1. GET all events
-app.get("/api/events", async (req, res) => {
-  const events = await Event.find();
+// GET all events
+app.get("/api/events", (req, res) => {
   res.json(events);
 });
 
-// 2. GET event by ID
-app.get("/api/events/:id", async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
-  } catch {
-    res.status(400).json({ message: "Invalid event ID" });
-  }
+// GET specific event
+app.get("/api/events/:id", (req, res) => {
+  const event = events.find(e => e.id === parseInt(req.params.id));
+  event ? res.json(event) : res.status(404).json({ message: "Event not found" });
 });
 
-// 3. POST create event
-app.post("/api/events", async (req, res) => {
-  try {
-    const event = await Event.create(req.body);
-    res.status(201).json(event);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+// POST create new event
+app.post("/api/events", (req, res) => {
+  const newEvent = { id: events.length + 1, ...req.body };
+  events.push(newEvent);
+  res.status(201).json(newEvent);
 });
 
-// 4. PUT update event
-app.put("/api/events/:id", async (req, res) => {
-  try {
-    const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
-  } catch {
-    res.status(400).json({ message: "Invalid event ID" });
-  }
+// PUT update event (full)
+app.put("/api/events/:id", (req, res) => {
+  const event = events.find(e => e.id === parseInt(req.params.id));
+  if (!event) return res.status(404).json({ message: "Event not found" });
+
+  event.name = req.body.name;
+  event.date = req.body.date;
+  event.venue = req.body.venue;
+
+  res.json(event);
 });
 
-// 5. PATCH event
-app.patch("/api/events/:id", async (req, res) => {
-  try {
-    const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!event) return res.status(404).json({ message: "Event not found" });
-    res.json(event);
-  } catch {
-    res.status(400).json({ message: "Invalid event ID" });
-  }
+// PATCH update event (partial)
+app.patch("/api/events/:id", (req, res) => {
+  const event = events.find(e => e.id === parseInt(req.params.id));
+  if (!event) return res.status(404).json({ message: "Event not found" });
+
+  Object.assign(event, req.body);
+  res.json(event);
 });
 
-// 6. DELETE event
-app.delete("/api/events/:id", async (req, res) => {
-  try {
-    const result = await Event.findByIdAndDelete(req.params.id);
-    if (!result) return res.status(404).json({ message: "Event not found" });
-    res.json({ message: "Event deleted" });
-  } catch {
-    res.status(400).json({ message: "Invalid event ID" });
-  }
+// DELETE event
+app.delete("/api/events/:id", (req, res) => {
+  events = events.filter(e => e.id !== parseInt(req.params.id));
+  res.json({ message: "Event deleted successfully" });
 });
 
-// ===== ATTENDEE ROUTES =====
+// ==================== ATTENDEE ROUTES ====================
 
-// 7. GET all attendees
-app.get("/api/attendees", async (req, res) => {
-  const attendees = await Attendee.find().populate("eventId");
+// GET all attendees
+app.get("/api/attendees", (req, res) => {
   res.json(attendees);
 });
 
-// 8. GET attendee by ID
-app.get("/api/attendees/:id", async (req, res) => {
-  try {
-    const attendee = await Attendee.findById(req.params.id).populate("eventId");
-    if (!attendee) return res.status(404).json({ message: "Attendee not found" });
-    res.json(attendee);
-  } catch {
-    res.status(400).json({ message: "Invalid attendee ID" });
-  }
+// POST new attendee
+app.post("/api/attendees", (req, res) => {
+  const newAttendee = { id: attendees.length + 1, ...req.body };
+  attendees.push(newAttendee);
+  res.status(201).json(newAttendee);
 });
 
-// 9. POST create attendee
-app.post("/api/attendees", async (req, res) => {
-  try {
-    const attendee = await Attendee.create(req.body);
-    res.status(201).json(attendee);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+// DELETE attendee
+app.delete("/api/attendees/:id", (req, res) => {
+  attendees = attendees.filter(a => a.id !== parseInt(req.params.id));
+  res.json({ message: "Attendee removed" });
 });
 
-// 10. DELETE attendee
-app.delete("/api/attendees/:id", async (req, res) => {
-  try {
-    const attendee = await Attendee.findByIdAndDelete(req.params.id);
-    if (!attendee) return res.status(404).json({ message: "Attendee not found" });
-    res.json({ message: "Attendee removed" });
-  } catch {
-    res.status(400).json({ message: "Invalid attendee ID" });
-  }
-});
+// ==================== ORGANIZER ROUTES ====================
 
-// ===== ORGANIZER ROUTES =====
-
-// 11. GET all organizers
-app.get("/api/organizers", async (req, res) => {
-  const organizers = await Organizer.find();
+// GET all organizers
+app.get("/api/organizers", (req, res) => {
   res.json(organizers);
 });
 
-// 12. GET organizer by ID
-app.get("/api/organizers/:id", async (req, res) => {
-  try {
-    const organizer = await Organizer.findById(req.params.id);
-    if (!organizer) return res.status(404).json({ message: "Organizer not found" });
-    res.json(organizer);
-  } catch {
-    res.status(400).json({ message: "Invalid ID" });
-  }
+// POST new organizer
+app.post("/api/organizers", (req, res) => {
+  const newOrg = { id: organizers.length + 1, ...req.body };
+  organizers.push(newOrg);
+  res.status(201).json(newOrg);
 });
 
-// 13. POST create organizer
-app.post("/api/organizers", async (req, res) => {
-  try {
-    const organizer = await Organizer.create(req.body);
-    res.status(201).json(organizer);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
+// PUT update organizer
+app.put("/api/organizers/:id", (req, res) => {
+  const org = organizers.find(o => o.id === parseInt(req.params.id));
+  if (!org) return res.status(404).json({ message: "Organizer not found" });
+
+  org.name = req.body.name;
+  org.contact = req.body.contact;
+
+  res.json(org);
 });
 
-// 14. PUT update organizer
-app.put("/api/organizers/:id", async (req, res) => {
-  try {
-    const organizer = await Organizer.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!organizer) return res.status(404).json({ message: "Organizer not found" });
-    res.json(organizer);
-  } catch {
-    res.status(400).json({ message: "Invalid ID" });
-  }
+// ==================== REPORTS ====================
+
+// Event statistics
+app.get("/api/reports/event-stats", (req, res) => {
+  res.json({
+    totalEvents: events.length,
+    totalAttendees: attendees.length
+  });
 });
 
-// ===== REPORTS =====
-
-// 15. Event stats
-app.get("/api/reports/event-stats", async (req, res) => {
-  const stats = {
-    totalEvents: await Event.countDocuments(),
-    totalAttendees: await Attendee.countDocuments()
-  };
-  res.json(stats);
+// ==================== SERVER START ====================
+app.listen(port, () => {
+  console.log(`✅ Event Management API running at http://localhost:${3000}`);
 });
-
-// ===== MongoDB Connection & Start Server =====
-async function startServer() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    console.log("✅ Connected to MongoDB Atlas");
-    app.listen(PORT, () => console.log('Server running at http://localhost:${3000}'));
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
-  }
-}
-
-startServer();
